@@ -1,8 +1,6 @@
 
 ####Salmon/Tximport####
 
-library(AminamRNA)
-
 library(GenomicFeatures)
 library(tximport)
 library(readr)
@@ -12,10 +10,10 @@ library(AnnotationDbi)
 
 ###Importing transacript abundances and construction of a gene-level DESeqDataSet object from Salmon quants files###
 library(tximportData)
-dir <- system.file("extdata", package = "AminamRNA", mustWork=TRUE)
+dir <- system.file("extdata", package = "tximportData", mustWork=TRUE)
 list.files(dir)
 list.files(file.path(dir, "quants"))
-csvfile <- file.path(dir, "sample_table_Mouse_Amina.csv")
+csvfile <- file.path(dir, "sample_table.csv")
 coldata <- read.csv(csvfile, row.names=1, stringsAsFactors=FALSE)
 coldata
 
