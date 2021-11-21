@@ -41,26 +41,6 @@ rowRanges(gse)
 seqinfo(rowRanges(gse))
 colData(gse)
 
-###SKIP###
-library(pathfindR)
-
-Enrich_Reads1 <- read.csv("/home/john/Documents/Amina_Final/mRNA/PathfindR/ShamvsTiO2_3v3_Final_GeneData.csv")
-DeSeq2_Enrich1 <- run_pathfindR(Enrich_Reads1, gene_sets = "mmu_KEGG", output_dir = "/home/john/Documents/Amina_Final/mRNA/PathfindR/Results_ShamvsTiO2", iterations = 10, n_processes = 32)
-
-clustered_1 <- cluster_enriched_terms(DeSeq2_Enrich1, plot_dend = FALSE, plot_clusters_graph = FALSE)
-clustered_1_NEW <- read.csv("/home/john/Documents/Amina_Final/mRNA/PathfindR/ShamvsTiO2_3v3_Final_Clustered.csv")
-
-selected_1 <- subset(clustered_1_NEW, Cluster %in% 1:4)
-enrichment_chart(selected_1, plot_by_cluster = TRUE)
-
-term_gene_heatmap(result_df = DeSeq2_Enrich1, genes_df = Enrich_Reads1)
-term_gene_graph(result_df = DeSeq2_Enrich1, use_description = TRUE)
-term_gene_graph(result_df = DeSeq2_Enrich1, num_terms = 5, use_description = TRUE)
-
-UpSet_plot(result_df = DeSeq2_Enrich1, genes_df = Enrich_Reads1, use_description = TRUE, num_terms = 5, high = "#FF4242", mid = "#E8F086", low = "#6FDE6E")
-
-write.csv(clustered_1, file = "/home/john/Documents/Amina_Final/mRNA/PathfindR/ShamvsTiO2_3v3_Final_Clustered.csv")
-
 ###DifferentialExpressionAnalysis###
 
 library("DESeq2")
@@ -86,43 +66,14 @@ resLFC <- lfcShrink(dds, coef="Exposure_TiO2_vs_Sham", type="apeglm")
 resLFC
 resOrdered <- res[order(res$pvalue),] #Orders results table by smallest p-value#
 summary(res)
-sum(res$padj < 0.05, na.rm=TRUE) #Tells us how many adj p-values were less than 0.05 or 0.1#
-sum(res$padj < 0.1, na.rm=TRUE)
-
-
-#Annotating and Exporting
-#library("AnnotationDbi")
-#library("org.Mm.eg.db")
-
-#columns(org.Mm.eg.db)
-
-#ens.str <- rownames(res)
-#res$symbol <- mapIds(org.Mm.eg.db,
-#                        keys=ens.str,
-#                        column="SYMBOL",
-#                        keytype="ENSEMBL",
-#                        multiVals="first")
-#res$entrez <- mapIds(org.Mm.eg.db,
-#                        keys=ens.str,
-#                       column="ENTREZID",
-#                        keytype="ENSEMBL",
-#                        multiVals="first")
-
-
+sum(res$padj < 0.05, na.rm=TRUE) #Tells us how many adj p-values were less than 0.05
 
 
 ##Exporting Results##
 resOrdered <- res[order(res$padj),]
 head(resOrdered)
 resOrderedDF <- as.data.frame(resOrdered)[1:3647, ]
-write.csv(resOrderedDF, file = "/home/john/Documents/Amina_Final/mRNA/ShamvsTiO2_3v3_Final_padj0.05_10-23-2021_AK.csv")
-
-
-    
-#If the adjusted p value cutoff will be a value other than 0.1, alpha should be set to that value:#
-#res05 <- results(dds, alpha=0.05)
-#summary(res05)
-
+write.csv(resOrderedDF, file = "path/to/file.csv")
 
 
 ###Exploring Results###
@@ -149,11 +100,11 @@ with(resLFC[topGene, ], {
 #resAsh <- lfcShrink(dds, coef=2, type="ashr")
 
 
-#par(mfrow=c(1,3), mar=c(4,4,2,1))
-#xlim <- c(1,1e5); ylim <- c(-3,3)
-#plotMA(resLFC, xlim=xlim, ylim=ylim, main="apeglm")
-#plotMA(resNorm, xlim=xlim, ylim=ylim, main="normal")
-#plotMA(resAsh, xlim=xlim, ylim=ylim, main="ashr")
+par(mfrow=c(1,3), mar=c(4,4,2,1))
+xlim <- c(1,1e5); ylim <- c(-3,3)
+plotMA(resLFC, xlim=xlim, ylim=ylim, main="apeglm")
+plotMA(resNorm, xlim=xlim, ylim=ylim, main="normal")
+plotMA(resAsh, xlim=xlim, ylim=ylim, main="ashr")
 
 
 ##Plot Counts##
@@ -188,9 +139,6 @@ ggplot(geneCounts, aes(x = Exposure, y = count)) +
 ##MoreInfoOnResultsColums##
 #Information about which variables and tests were used can be found by calling the function mcols on the results object.#
 mcols(res)$description
-
-
-
 
 ###Data Normalization Assessment###
 
@@ -239,7 +187,6 @@ ggplot(df, aes(x = x, y = y)) + geom_hex(bins = 80) +
   coord_fixed() + facet_grid( . ~ transformation)
 
 
-
 ##Sample Distances##
 sampleDists <- dist(t(assay(vsd)))
 sampleDists
@@ -285,13 +232,13 @@ ggplot(pcaData, aes(x = PC1, y = PC2, color = Exposure)) +
 
 
 #Generalzied version of PCA for dimesnsion reduction of non-normally distributed data such as counts and binary matrices#
-#library("glmpca")
-#gpca <- glmpca(counts(dds), L=2)
-#gpca.dat <- gpca$factors
-#gpca.dat$Exposure <- dds$Exposure
+library("glmpca")
+gpca <- glmpca(counts(dds), L=2)
+gpca.dat <- gpca$factors
+gpca.dat$Exposure <- dds$Exposure
 
-#ggplot(gpca.dat, aes(x = dim1, y = dim2, color = Exposure)) +
-#  geom_point(size =3) + coord_fixed() + ggtitle("glmpca - Generalized PCA")
+ggplot(gpca.dat, aes(x = dim1, y = dim2, color = Exposure)) +
+  geom_point(size =3) + coord_fixed() + ggtitle("glmpca - Generalized PCA")
 
 
 ##MDS Plot)similar to PCA plot but usig multidimensional scaling function-useful when we don't have a matrix of data##
@@ -300,12 +247,10 @@ mds <- as.data.frame(colData(vsd))  %>%
 ggplot(mds, aes(x = `1`, y = `2`, color = Exposure)) +
   geom_point(size = 3) + coord_fixed() + ggtitle("MDS with VST data")
 
-#mdsPois <- as.data.frame(colData(dds)) %>%
-#  cbind(cmdscale(samplePoisDistMatrix))
-#ggplot(mdsPois, aes(x = `1`, y = `2`, color = Exposure)) +
-#  geom_point(size = 3) + coord_fixed() + ggtitle("MDS with PoissonDistances")
-
-
+mdsPois <- as.data.frame(colData(dds)) %>%
+  cbind(cmdscale(samplePoisDistMatrix))
+ggplot(mdsPois, aes(x = `1`, y = `2`, color = Exposure)) +
+  geom_point(size = 3) + coord_fixed() + ggtitle("MDS with PoissonDistances")
 
 
 ###Data Quality Assessment by Sample Clustering and Visualization###
@@ -364,19 +309,7 @@ vsScatterMatrix(dds, d.factor = "Exposure", type = "deseq")
 #vsVolcano("untrt2", "trt2", dds, d.factor = "group", type = "deseq", x.lim = c(-10,10), padj = 0.05)
 vsVolcanoMatrix(dds, d.factor = "Exposure", type = "deseq", lfc = 2, padj = 0.05, x.lim = c(-8,8),
                 title = FALSE, legend = TRUE, grid = TRUE, counts = FALSE, facet.title.size = 10)
-##Bubble Chart##
-library(pathfindR)
-#Need at least 100 significant genes#
-#KEGG#
-Enrich_Reads <- read.csv("/home/john/Documents/AminamRNA/AminamRNA/Output_Salmon/PathFindR/Sham_vs_Exp_Gene_Data.csv")
-DeSeq2_Enrich <- run_pathfindR(Enrich_Reads, gene_sets = "mmu_KEGG", output_dir = "pathfindR_Results")
-enrichment_chart(DeSeq2_Enrich, top_terms = 10, num_bubbles = 4, even_breaks = TRUE) #top_terms= determines the number of most enriched pathways to be included
 
-#BioCarta#
-#biocarta_list <- fetch_gene_set(gene_sets = "BioCarta", min_gset_size = 10, max_gset_size = 300) 
-#Enrich_Reads <- read.csv("/home/john/Documents/AminamRNA/AminamRNA/Output_Salmon/PathFindR/Sham_vs_Exp_Gene_Data.csv")
-#DeSeq2_Enrich <- run_pathfindR(Enrich_Reads, gene_sets = "BioCarta", output_dir = "pathfindR_Results")
-#clustered_df <- cluster_enriched_terms(output_df, plot_hmap = TRUE)
 
 ##Volcano Plots##
 library(EnhancedVolcano)
