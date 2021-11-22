@@ -1,0 +1,40 @@
+##HISAT2-BUILD
+hisat2-build -p 32 path/to/file/Mus_musculus.GRCm39.dna.primary_assembly_104.fa path/to/file/GRCm39_E104/GRCm39_E104
+
+##FLEXBAR-TRIM-SINGLE
+flexbar --reads path/to/file_input.fastq.gz \
+        --stdout-reads \
+        --adapters tso_g_wo_hp.fasta \
+        --adapter-trim-end LEFT \
+        --adapter-revcomp ON \
+        --adapter-revcomp-end RIGHT \
+        --htrim-left GT \
+        --htrim-right CA \
+        --htrim-min-length 3 \
+        --htrim-max-length 5 \
+        --htrim-max-first \
+        --htrim-adapter \
+        --min-read-length 2 \
+	--output-log path/to/file.log \
+        --threads 32 | \
+    flexbar \
+        --reads - \
+        --target output_reads \
+        --adapters ilmn_20_2_seqs.fasta \
+        --adapter-trim-end RIGHT \
+        --min-read-length 2 \
+	--output-log path/to/file.log \
+        --threads 32 \
+	--output-reads path/to/file_output.fastq.gz
+
+##HISAT2-ALIGN-PE
+hisat2 --phred33 --no-unal -p 32 -t -x path/to/file/GRCm39_E104/GRCm39_E104 -1 path/to/file_R1.fastq.gz -2 path/to/file_R2.fastq.gz | samtools view -b -> path/to/file.input.bam
+
+hisat2 --phred33 --no-unal -p 32 -t -x path/to/file/GRCm39_E104/GRCm39_E104 -1 path/to/file_R1.fastq.gz -2 path/to/file_R2.fastq.gz | samtools view -b -> path/to/file.IP.bam
+
+
+##Salmon Mapping-Based Mode
+
+salmon index -t path/to/transcripts.fa -i path/to/transcripts_index --decoys path/to/decoys.txt -k 31
+
+salmon quant -i path/to/transcripts_index -l -1 path/to/reads1.fq -2 path/to/reads2.fq --validateMappings -o transcripts_quant
